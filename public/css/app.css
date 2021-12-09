@@ -1,0 +1,13 @@
+.alert{
+    width: calc(100% - 25px);
+    margin-left: 5px;
+    height: -webkit-max-content;
+    height: -moz-max-content;
+    height: max-content;
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+    padding: 10px;
+    margin-bottom: 25px;
+    font-size: medium;
+  }
