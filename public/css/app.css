@@ -1,3 +1,8 @@
+body{
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
 .alert{
     width: calc(100% - 25px);
     margin-left: 5px;

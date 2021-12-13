@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../../../css/login.css";
+//import "../../../css/login.css";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import AuthService from "../../Services/AuthService";
@@ -44,7 +44,7 @@ const Register = (props) => {
                         isLoggedIn:true,
                         user:userData
                     };
-                    props.AuthStore.saveToken(JSON.stringify(appState));
+                    props.AuthStore.saveToken(appState);
                     alert('Kayıt Başarılı');
                 }else{
                     alert('Giriş başarısız');
@@ -108,55 +108,43 @@ const Register = (props) => {
             ) : (
                 <div></div>
             )}
-                <label htmlFor="name" className="sr-only">
-                    Ad Soyad
-                </label>
                 <input
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    type="name"
+                    type="text"
                     id="name"
                     name="name"
                     className="form-control"
                     placeholder="Ad Soyad"
                     required
                 />
-                <label htmlFor="inputEmail" name="email" className="sr-only">
-                    E-Posta
-                </label>
                 <input
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     type="email"
                     id="inputEmail"
-                    className="form-control"
+                    className="form-control mt-3"
                     name="email"
                     placeholder="Email address"
                     required
                 />
-                <label htmlFor="inputPassword" className="sr-only">
-                    Şifre
-                </label>
                 <input
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     type="password"
                     id="inputPassword"
                     name="password"
-                    className="form-control"
+                    className="form-control mt-3"
                     placeholder="Password"
                     required
                 />
-                <label htmlFor="inputPasswordconf" className="sr-only">
-                    Şifre Doğrulama
-                </label>
                 <input
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     type="password"
                     id="inputPasswordconf"
                     name="password_confirmation"
-                    className="form-control"
+                    className="form-control mt-3"
                     placeholder="Password"
                     required
                 />
