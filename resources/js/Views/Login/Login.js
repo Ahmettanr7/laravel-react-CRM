@@ -49,8 +49,7 @@ const Login = (props) => {
                             user: userData,
                         };
                         props.AuthStore.saveToken(appState);
-                        //alert('Giriş Başarılı');
-                        history.push("/");
+                        window.location.href = '/';
                     } else {
                         alert("Giriş başarısız");
                     }

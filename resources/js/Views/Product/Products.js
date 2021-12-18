@@ -20,6 +20,7 @@ const Products = (props) => {
                 console.log(e);
             });
     }, []);
+
     const deleteProduct = (items) => {
         swal({
             title: "Silme işlemini onayla",
@@ -63,7 +64,7 @@ const Products = (props) => {
     const data = products.map((product) => [
         product.id,
         product.name,
-        product.categoryId,
+        product.category[0].name,
         product.brand,
         product.modelCode,
         product.stock,
@@ -73,7 +74,7 @@ const Products = (props) => {
     const options = {
         filter: true,
         filterType: "checkbox",
-        responsive: "standart",
+        responsive: "standard",
         searchPlaceholder: "Arama Yap",
         onRowClick: (event, rowData) => {
             window.location.href = "urunler/duzenle/" + event[0];

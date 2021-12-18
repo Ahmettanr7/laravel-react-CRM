@@ -12,6 +12,9 @@ class ProductImage extends Model
     protected $fillable = [
         'productId',
         'path'
-
     ];
+
+    public function getPathAttribute(){
+        return asset($this->attributes['path']);
+    }
 }

@@ -26,7 +26,7 @@ class CreateProductsTable extends Migration
             $table->text('text')->nullable();
             $table->double('buyingPrice')->nullable();
             $table->double('sellingPrice')->nullable();
-            $table->double('taxPrice')->nullable();
+            $table->double('tax')->nullable();
             $table->timestamps();
         });
     }

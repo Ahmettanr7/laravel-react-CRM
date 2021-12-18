@@ -1,5 +1,4 @@
 import axios from "axios";
-import { values } from "lodash";
 
 export default class ProductService{
 
@@ -11,6 +10,24 @@ export default class ProductService{
         }
         }
         return axios.get("/api/product",config)
+    }
+
+    getById(id,token){
+        const config = {
+            headers:{
+            'Authorization':'Bearer '+token
+        }
+        }
+        return axios.get("/api/product/"+id+"/edit",config)
+    }
+
+    getCategories(token){
+        const config = {
+            headers:{
+            'Authorization':'Bearer '+token
+        }
+        }
+        return axios.get("/api/product/create",config)
     }
 
     add(product,token){
@@ -32,12 +49,15 @@ export default class ProductService{
         }
         return axios.delete("/api/product/"+id,config)
     }
-    getById(id,token){
+
+    update(id,product,token){
         const config = {
             headers:{
-            'Authorization':'Bearer '+token
+                'Accept':'application/json',
+                'content-type':'multipart/form-data',
+                'Authorization':'Bearer '+ token
+            }
         }
-        }
-        return axios.get("/api/product/"+id+"/edit",config)
+        return axios.post("/api/product/"+id,product,config)
     }
 }

@@ -4,9 +4,12 @@ namespace App\Http\Controllers\api\Product;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Helper\fileUpload;
+use App\Models\ProductProperty;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -18,7 +21,7 @@ class ProductController extends Controller
     public function index()
     {
         $user = request()->user();
-        $data = Product::all();
+        $data = Product::with('category')->get();
 
         return response()->json(['success'=>true,'user'=>$user,'data'=>$data]);
     }
@@ -30,7 +33,12 @@ class ProductController extends Controller
      */
     public function create()
     {
-        //
+        $user = request()->user();
+        $categories = Category::where('userId',$user->id)->get();
+        return response()->json([
+            'success'=>true,
+            'categories'=>$categories
+        ]);
     }
 
     /**
@@ -44,7 +52,9 @@ class ProductController extends Controller
         $user = request()->user();
         $all = $request->all();
         $file = (isset($all['file'])) ? $all['file'] : [];
+        $properties = (isset($all['property'])) ? json_decode($all['property'],true) : [];
         unset($all['file']);
+        unset($all['property']);
         $all['userId'] = $user->id;       
         $create = Product::create($all);
 
@@ -54,6 +64,13 @@ class ProductController extends Controller
                 ProductImage::create([
                     'productId'=>$create->id,
                     'path'=>$upload
+                ]);
+            }
+            foreach($properties as $property){
+                ProductProperty::create([
+                    'productId'=>$create->id,
+                    'property'=>$property['property'],
+                    'value'=>$property['value']
                 ]);
             }
             return response()->json([
@@ -91,9 +108,11 @@ class ProductController extends Controller
         $user = request()->user();
         $control = Product::where('id',$id)->where('userId',$user->id)->count();
         if ($control == 0) { return response()->json(['success'=>false,'message'=>'Ürün size ait değil']); }
-        $product = Product::where('id',$id)->first();
+        $product = Product::where('id',$id)->with('property')->with('images')->first();
+        $categories = Category::where('userId',$user->id)->get();
         return response()->json([
             'success'=>true,
+            'categories'=>$categories,  
             'product'=>$product
         ]);
     }
@@ -107,7 +126,66 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $user = request()->user();
+        $control = Product::where('id',$id)->where('userId',$user->id)->count();
+        if($control == 0){ return response()->json(['success'=>false,'message'=>'Ürün size ait degil']);}
+
+        $all = $request->all();
+        $file = (isset($all['file'])) ? json_decode($all['file'],true) : [];
+        $newFile = (isset($all['newFile'])) ? $all['newFile'] : [];
+        $properties = (isset($all['property'])) ? json_decode($all['property'],true) : [];
+        Log::info(json_encode($file));
+        foreach($file as $item){
+            if(isset($item['isRemove'])){
+                $productImage = ProductImage::where('id',$item['id'])->first();
+                try {
+                    unlink(public_path($productImage->image));
+                }
+                catch(\Exception $e){
+
+                }
+                ProductImage::where('id',$item['id'])->delete();
+            }
+        }
+
+        foreach($newFile as $item){
+           
+            $upload = fileUpload::newUpload(rand(1,9000),"products",$item,0);
+            ProductImage::create([
+                'productId'=>$id,
+                'path'=>$upload
+            ]);
+        }
+
+        ProductProperty::where('productId',$id)->delete();
+        foreach($properties as $property){
+            ProductProperty::create([
+                'productId'=>$id,
+                'property'=>$property['property'],
+                'value'=>$property['value']
+            ]);
+        }
+        
+        
+        unset($all['file']);
+        unset($all['newFile']);
+        unset($all['_method']);
+        unset($all['property']);
+        $create = Product::where('id',$id)->update($all);
+        if($create){
+            
+            return response()->json([
+                'success'=>true,
+                'message'=>'Ürün Düzenleme Başarılı'
+            ]);
+        }
+        else 
+        {
+            return response()->json([
+                'success'=>false,
+                'message'=>'Ürün Düzenleme Başarısız'
+            ]);
+        }
     }
 
     /**
@@ -127,6 +205,7 @@ class ProductController extends Controller
             } catch (\Exception $e) {}
         }
         ProductImage::where('productId',$id)->delete();
+        ProductProperty::where('productId',$id)->delete();
         Product::where('id',$id)->delete();
         return response()->json(['success'=>true,'message'=>'Ürün başarıyla silindi']);
     }

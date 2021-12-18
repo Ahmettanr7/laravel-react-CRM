@@ -7,16 +7,26 @@ import PrivateRoute from './PrivateRoute';
 import Products from './Views/Product/Products'
 import CreateProduct from './Views/Product/CreateProduct';
 import EditProduct from './Views/Product/EditProduct';
+import Categories from './Views/Category/Categories';
+import CreateCategory from './Views/Category/CreateCategory';
+import EditCategory from './Views/Category/EditCategory';
 
 export default function Dashboard() {
     return (
         <Switch>
+
         <PrivateRoute exact path={'/'} component={Home}></PrivateRoute>
+        
         <Route path={'/login'} component={Login}></Route>
         <Route path={'/register'} component={Register}></Route>
+
         <PrivateRoute exact path={'/urunler'} component={Products}></PrivateRoute>
-        <PrivateRoute exact path={'/urunler/ekle'} component={CreateProduct}></PrivateRoute>
-        <PrivateRoute exact path={'/urunler/duzenle/:id'} component={EditProduct}></PrivateRoute>
+        <PrivateRoute  path={'/urunler/ekle'} component={CreateProduct}></PrivateRoute>
+        <PrivateRoute  path={'/urunler/duzenle/:id'} component={EditProduct}></PrivateRoute>
+
+        <PrivateRoute exact path={'/kategoriler'} component={Categories}></PrivateRoute>
+        <PrivateRoute  path={'/kategoriler/ekle'} component={CreateCategory}></PrivateRoute>
+        <PrivateRoute  path={'/kategoriler/duzenle/:id'} component={EditCategory}></PrivateRoute>
         </Switch>
     )
 }

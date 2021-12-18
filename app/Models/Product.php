@@ -21,6 +21,17 @@ class Product extends Model
         'buyingPrice',
         'sellingPrice',
         'taxPrice'
-
     ];
+
+    public function category(){
+        return $this->HasMany(Category::class,'id','categoryId');
+    }
+
+    public function property(){
+        return $this->HasMany(ProductProperty::class,'productId','id');
+    }
+
+    public function images (){
+        return $this->HasMany(ProductImage::class,'productId','id');
+    }
 }

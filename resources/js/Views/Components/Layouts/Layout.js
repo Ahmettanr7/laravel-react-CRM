@@ -11,7 +11,6 @@ import AuthService from "../../../Services/AuthService";
 const Layout = (props) => {
     const [user, setUser] = useState({});
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const history = useHistory();
 
     props.AuthStore.getToken();
     
@@ -25,13 +24,13 @@ const Layout = (props) => {
             .authenticate(token)
             .then((result) => {
                 if (!result.data.isLoggedIn) {
-                    history.push("/login");
+                    props.history.push("/login");
                 }
                 setUser(result.data.user);
                 setIsLoggedIn(result.data.isLoggedIn);
             })
             .catch((e) => {
-                history.push("/login");
+                props.history.push("/login");
             });
     }, []);
 
@@ -46,15 +45,34 @@ const Layout = (props) => {
             .then((res) => console.log(res))
             .catch((e) => console.log(e));
         props.AuthStore.removeToken();
-        history.push("/login");
+       window.location.href = '/login';
     };
 
     return (
         <>
             <Navbar style={{background:'#2f5e58'}}>
             <Container >
-                <Navbar.Brand style={{color:'#fff'}} href="/">CRM</Navbar.Brand>
+                <Navbar.Brand style={{color:'#fff'}} href="/">CRM ADMİN</Navbar.Brand>
                 <Navbar.Toggle />
+                <Navbar.Collapse  className="justify-content-start text-white">
+                    <Nav >
+                        <NavDropdown
+                        title="Ürün Yönetimi"
+                        >
+                        <NavDropdown.Item href="/urunler">Ürünler</NavDropdown.Item>
+                        <NavDropdown.Item href="/urunler/ekle">Yeni Ürün</NavDropdown.Item>
+                        </NavDropdown>
+                    </Nav>
+
+                    <Nav >
+                        <NavDropdown
+                        title="Kategori Yönetimi"
+                        >
+                        <NavDropdown.Item href="/kategoriler">Kategoriler</NavDropdown.Item>
+                        <NavDropdown.Item href="/kategoriler/ekle">Yeni Kategori</NavDropdown.Item>
+                        </NavDropdown>
+                    </Nav>
+                    </Navbar.Collapse>
                 <Navbar.Collapse className="justify-content-end">
                     <Nav>
                         <NavDropdown
@@ -62,11 +80,9 @@ const Layout = (props) => {
                         title={user.name}
                         menuVariant="dark"
                         >
-                        <NavDropdown.Item href="/urunler">Ürünler</NavDropdown.Item>
-                        <NavDropdown.Item href="/urunler/ekle">Yeni Ürün</NavDropdown.Item>
-                        <NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
+                        <NavDropdown.Item href="/">Hesap Ayarları</NavDropdown.Item>
                         <NavDropdown.Divider />
-                        <NavDropdown.Item href="#action/3.4">Separated link</NavDropdown.Item>
+                        <NavDropdown.Item onClick={logout}>Çıkış Yap</NavDropdown.Item>
                         </NavDropdown>
                     </Nav>
                     </Navbar.Collapse>

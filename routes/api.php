@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\api\Product\ProductController;
+use App\Http\Controllers\api\category\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,4 +28,5 @@ Route::group([
         Route::post('/logout',[AuthController::class,'logout']);
         Route::post('/authenticate',[AuthController::class,'authenticate']);
         Route::resource('/product',ProductController::class);
+        Route::resource('/category',CategoryController::class);
     });

@@ -1,247 +1,402 @@
-import React, { useState } from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import ProductService from "../../Services/ProductService";
 import { inject, observer } from "mobx-react";
+import React, { useEffect, useState } from "react";
+import Layout from "../Components/Layouts/Layout";
+import { Formik } from "formik";
+import * as Yup from "yup";
+import CustomInput from "../Components/Form/CustomInput";
 import Select from "react-select";
 import ImageUploader from "react-images-upload";
 import CKEditor from "ckeditor4-react";
-import Layout from "../Components/Layouts/Layout";
-import swal from 'sweetalert';
-
+import swal from "sweetalert";
+import ProductService from "../../Services/ProductService";
 const CreateProduct = (props) => {
-    const [errors, setErrors] = useState([]);
-    const productService = new ProductService();
-    const options = [
-        { value: 1, label: "Kategori1" },
-        { value: 2, label: "Kategori2" },
-        { value: 3, label: "Kategori3" },
-    ];
+    const [categories, setCategories] = useState([]);
     const [images, setImages] = useState([]);
+    const [property, setProperty] = useState([]);
 
-    const createSchema = Yup.object().shape({
-    });
-    const formik = useFormik({
-        initialValues: {
-            categoryId: "",
-            name: "",
-            modelCode: "",
-            barcode: "",
-            brand: "",
-            stock: "",
-            text: "",
-            tax: "",
-            sellingPrice: "",
-            buyingPrice: "",
-        },
-        validationSchema: createSchema,
-        onSubmit: (values) => {
-            const token = props.AuthStore.appState.user.access_token;
-            const data = new FormData();
-            images.forEach((image_file) => {
-                data.append("file[]", image_file);
+    useEffect(() => {
+        let productService = new ProductService();
+        const token = props.AuthStore.appState.user.access_token;
+        productService
+            .getCategories(token)
+            .then((res) => {
+                setCategories(res.data.categories);
+            })
+            .catch((e) => console.log(e));
+    }, []);
+
+    const handleSubmit = (values, { resetForm, setSubmitting }) => {
+        let productService = new ProductService();
+        const token = props.AuthStore.appState.user.access_token;
+
+        const data = new FormData();
+
+        images.forEach((image_file) => {
+            data.append("file[]", image_file);
+        });
+
+        data.append("categoryId", values.categoryId);
+        data.append("name", values.name);
+        data.append("modelCode", values.modelCode);
+        data.append("barcode", values.barcode);
+        data.append("brand", values.brand);
+        data.append("tax", values.tax);
+        data.append("stock", values.stock);
+        data.append("sellingPrice", values.sellingPrice);
+        data.append("buyingPrice", values.buyingPrice);
+        data.append("text", values.text);
+        data.append("property", JSON.stringify(property));
+
+        productService
+            .add(data, token)
+            .then((res) => {
+                if (res.data.success) {
+                    swal("Ürün Eklendi");
+                    resetForm({});
+                    setImages([]);
+                    setProperty([]);
+                    setSubmitting(false);
+                } else {
+                    swal(res.data.message);
+                    setSubmitting(true);
+                }
+            })
+            .catch((e) => {
+                setSubmitting(true);
+                console.log(e);
             });
-            data.append("categoryId", values.categoryId);
-            data.append("name", values.name);
-            data.append("modelCode", values.modelCode);
-            data.append("barcode", values.barcode);
-            data.append("brand", values.brand);
-            data.append("stock", values.stock);
-            data.append("text", values.text);
-            data.append("tax", values.tax);
-            data.append("sellingPrice", values.sellingPrice);
-            data.append("buyingPrice", values.buyingPrice);
+    };
 
-            productService
-                .add(data, token)
-                .then((result) => {
-                    if (result.data.success) {
-                        formik.resetForm({})
-                        setImages([])
-                        swal(result.data.message)
-                        props.history.push('/urunler');
+    const newProperty = () => {
+        setProperty([...property, { property: "", value: "" }]);
+    };
 
-                    } else {
-                        swal(result.data.message)
-                    }
-                })
-                .catch((error) => {
-                    if (error.response) {
-                        let err = error.response.data;
-                        setErrors(err.errors);
-                    } else if (error.request) {
-                        let err = error.request;
-                    }
-                });
-                
-        },
-    });
+    const removeProperty = (index) => {
+        const OldProperty = property;
+        OldProperty.splice(index, 1);
+        setProperty([...OldProperty]);
+    };
 
-    let err = [];
-    Object.values(errors).forEach((value) => {
-        err.push(value);
-    });
+    const changeTextInput = (event, index) => {
+        console.log(property);
+        console.log(event.target.value, index);
+        property[index][event.target.name] = event.target.value;
+        setProperty([...property]);
+    };
 
     return (
-        <>
-            <Layout>
-                <div className="container text-center mt-5 mb-5">
-                    <h3 className="mb-5">Yeni Ürün Oluştur</h3>
-                    <form
-                        onSubmit={formik.handleSubmit}
-                        className="form-signin"
+        <Layout>
+            <div className="mt-5">
+                <div className="container">
+                    <Formik
+                        initialValues={{
+                            categoryId: "",
+                            name: "",
+                            modelCode: "",
+                            barcode: "",
+                            brand: "",
+                            stock: 0,
+                            tax: 0,
+                            buyingPrice: "",
+                            sellingPrice: "",
+                            text: "",
+                        }}
+                        onSubmit={handleSubmit}
+                        validationSchema={Yup.object().shape({
+                            categoryId: Yup.number().required(
+                                "Kategori Seçimi Zorunludur"
+                            ),
+                            name: Yup.string().required("Ürün Adı Zorunludur"),
+                            modelCode: Yup.string().required(
+                                "Ürün Model Kodu Zorunludur"
+                            ),
+                            barcode: Yup.string().required(
+                                "Ürün Barkodu Zorunludur"
+                            ),
+                            brand: Yup.string().required(
+                                "Ürün Markası Zorunludur"
+                            ),
+                            buyingPrice: Yup.number().required(
+                                "Ürün Alış Fiyatı Zorunludur"
+                            ),
+                            sellingPrice: Yup.number().required(
+                                "Ürün Satış Fiyatı Zorunludur"
+                            ),
+                        })}
                     >
-                        {err.length != 0 &&
-                            err.map((item, index) => (
-                                <div className="alert" key={index}>
-                                    <span>{item}</span>
+                        {({
+                            values,
+                            handleChange,
+                            handleSubmit,
+                            handleBlur,
+                            errors,
+                            isValid,
+                            isSubmitting,
+                            setFieldValue,
+                            touched,
+                        }) => (
+                            <div>
+                                <div className="row">
+                                    <div className="col-md-12">
+                                        <ImageUploader
+                                            withIcon={true}
+                                            buttonText="Choose images"
+                                            onChange={(picturesFiles) =>
+                                                setImages(
+                                                    images.concat(picturesFiles)
+                                                )
+                                            }
+                                            imgExtension={[
+                                                ".jpg",
+                                                ".gif",
+                                                ".png",
+                                                ".gif",
+                                                ".JPG",
+                                            ]}
+                                            maxFileSize={5242880}
+                                            withPreview={true}
+                                        />
+                                    </div>
                                 </div>
-                            ))}
-
-                        <div className="row">
-                            <div className="col-6">
-                                <ImageUploader
-                                    withIcon={true}
-                                    buttonText="Ürün resmi seçin"
-                                    onChange={(pictures) =>
-                                        setImages(images.concat(pictures))
-                                    }
-                                    imgExtension={[".jpg", ".gif", ".png"]}
-                                    maxFileSize={5242880}
-                                    withPreview={true}
-                                />
+                                <div className="row">
+                                    <div className="col-md-12">
+                                        <div className="form-group">
+                                            <Select
+                                                onChange={(e) =>
+                                                    setFieldValue(
+                                                        "categoryId",
+                                                        e.id
+                                                    )
+                                                }
+                                                placeholder={
+                                                    "Ürün Kategorisi seçiniz *"
+                                                }
+                                                getOptionLabel={(option) =>
+                                                    option.name
+                                                }
+                                                getOptionValue={(option) =>
+                                                    option.id
+                                                }
+                                                options={categories}
+                                            />
+                                        </div>
+                                        {errors.categoryId &&
+                                            touched.categoryId && (
+                                                <p className="form-error">
+                                                    {errors.categoryId}
+                                                </p>
+                                            )}
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6 ">
+                                        <CustomInput
+                                            title="Ürün Adı *"
+                                            value={values.name}
+                                            handleChange={handleChange("name")}
+                                        />
+                                        {errors.name && touched.name && (
+                                            <p className="form-error">
+                                                {errors.name}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="col-md-6 ">
+                                        <CustomInput
+                                            title="Ürün Model Kodu *"
+                                            value={values.modelCode}
+                                            handleChange={handleChange(
+                                                "modelCode"
+                                            )}
+                                        />
+                                        {errors.modelCode &&
+                                            touched.modelCode && (
+                                                <p className="form-error">
+                                                    {errors.modelCode}
+                                                </p>
+                                            )}
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6 ">
+                                        <CustomInput
+                                            title="Barkod *"
+                                            value={values.barcode}
+                                            handleChange={handleChange(
+                                                "barcode"
+                                            )}
+                                        />
+                                        {errors.barcode && touched.barcode && (
+                                            <p className="form-error">
+                                                {errors.barcode}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="col-md-6 ">
+                                        <CustomInput
+                                            title="Marka *"
+                                            value={values.brand}
+                                            handleChange={handleChange("brand")}
+                                        />
+                                        {errors.brand && touched.brand && (
+                                            <p className="form-error">
+                                                {errors.brand}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6 ">
+                                        <CustomInput
+                                            title="Stok"
+                                            type="number"
+                                            value={values.stock}
+                                            handleChange={handleChange("stock")}
+                                        />
+                                        {errors.stock && touched.stock && (
+                                            <p className="form-error">
+                                                {errors.stock}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="col-md-6 ">
+                                        <CustomInput
+                                            title="KDV"
+                                            value={values.tax}
+                                            handleChange={handleChange("tax")}
+                                        />
+                                        {errors.tax && touched.tax && (
+                                            <p>{errors.tax}</p>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6 ">
+                                        <CustomInput
+                                            title="Alış Fiyatı *"
+                                            type="number"
+                                            value={values.buyingPrice}
+                                            handleChange={handleChange(
+                                                "buyingPrice"
+                                            )}
+                                        />
+                                        {errors.buyingPrice &&
+                                            touched.buyingPrice && (
+                                                <p className="form-error">
+                                                    {errors.buyingPrice}
+                                                </p>
+                                            )}
+                                    </div>
+                                    <div className="col-md-6 ">
+                                        <CustomInput
+                                            title="Satış Fiyatı *"
+                                            type="number"
+                                            value={values.sellingPrice}
+                                            handleChange={handleChange(
+                                                "sellingPrice"
+                                            )}
+                                        />
+                                        {errors.sellingPrice &&
+                                            touched.sellingPrice && (
+                                                <p className="form-error">
+                                                    {errors.sellingPrice}
+                                                </p>
+                                            )}
+                                    </div>
+                                </div>
+                                <div className="row">
+                                    <div className="col-md-6 mt-3">
+                                        <CKEditor
+                                            data={values.text}
+                                            onChange={(event) => {
+                                                const data =
+                                                    event.editor.getData();
+                                                setFieldValue("text", data);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="col-md-6 mt-3">
+                                    <div className="row mb-3 mt-3">
+                                    <div className="col-md-12">
+                                    <label>Özellik</label> <br/>
+                                        <button
+                                            type="button"
+                                            onClick={newProperty}
+                                            className="btn btn-primary mt-2"
+                                        >
+                                            Yeni Özellik
+                                        </button>
+                                    </div>
+                                </div>
+                                {property.map((item, index) => (
+                                    <div className="row mb-1">
+                                        <div className="col-md-5">
+                                            <label>Özellik adı:</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                name="property"
+                                                onChange={(event) =>
+                                                    changeTextInput(
+                                                        event,
+                                                        index
+                                                    )
+                                                }
+                                                value={item.property}
+                                            />
+                                        </div>
+                                        <div className="col-md-5">
+                                            <label>Özellik Değeri:</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                name="value"
+                                                onChange={(event) =>
+                                                    changeTextInput(
+                                                        event,
+                                                        index
+                                                    )
+                                                }
+                                                value={item.value}
+                                            />
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: "flex",
+                                                justifyContent: "center",
+                                                alignItems: "flex-end",
+                                            }}
+                                            className="col-md-1"
+                                        >
+                                            <button
+                                                onClick={() =>
+                                                    removeProperty(index)
+                                                }
+                                                type="button"
+                                                className="btn btn-danger"
+                                            >
+                                                X
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                                    </div>
+                                </div>
+                                <button
+                                    disabled={!isValid || isSubmitting}
+                                    onClick={handleSubmit}
+                                    className="btn btn-lg btn-success btn-block mb-5 "
+                                    style={{float:'right'}}
+                                    type="button"
+                                >
+                                    Ürünü Ekle
+                                </button>
                             </div>
-                            <div className="col-6">
-                                <Select
-                                    className="form-control"
-                                    options={options}
-                                    onChange={(e) =>
-                                        formik.setFieldValue(
-                                            "categoryId",
-                                            e.value
-                                        )
-                                    }
-                                    onBlur={formik.handleBlur}
-                                    name="categoryId"
-                                    placeholder="Kategori Seçiniz"
-                                    getOptionLabel={(option) => option.label}
-                                    getOptionValue={(option) => option.value}
-                                />
-                            </div>
-                        </div>
-                        <div className="row">
-                            <div className="col-6">
-                                <input
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    type="text"
-                                    className="form-control mt-3"
-                                    name="name"
-                                    placeholder="Ürün Adı"
-                                    required
-                                />
-                            </div>
-                            <div className="col-6">
-                                <input
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    type="text"
-                                    name="modelCode"
-                                    className="form-control mt-3"
-                                    placeholder="Model Kodu"
-                                    required
-                                />
-                            </div>
-                        </div>
-                        <div className="row">
-                            <div className="col-6">
-                                <input
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    type="text"
-                                    name="barcode"
-                                    className="form-control mt-3"
-                                    placeholder="Barkod"
-                                    required
-                                />
-                            </div>
-                            <div className="col-6">
-                                <input
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    type="text"
-                                    name="brand"
-                                    className="form-control mt-3"
-                                    placeholder="Marka"
-                                    required
-                                />
-                            </div>
-                        </div>
-                        <div className="row">
-                            <div className="col-6">
-                                <input
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    type="number"
-                                    name="stock"
-                                    className="form-control mt-3"
-                                    placeholder="Stok"
-                                    required
-                                />
-                            </div>
-                            <div className="col-6">
-                                <input
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    type="number"
-                                    name="tax"
-                                    className="form-control mt-3"
-                                    placeholder="vergi"
-                                />
-                            </div>
-                        </div>
-                        <div className="row">
-                            <div className="col-6">
-                                <input
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    type="number"
-                                    name="buyingPrice"
-                                    className="form-control mt-3"
-                                    placeholder="Alış Fiyatı"
-                                />
-                            </div>
-                            <div className="col-6">
-                                <input
-                                    onChange={formik.handleChange}
-                                    onBlur={formik.handleBlur}
-                                    type="number"
-                                    name="sellingPrice"
-                                    className="form-control mt-3"
-                                    placeholder="Satış Fiyatı"
-                                />
-                            </div>
-                        </div>
-                        <CKEditor
-                            onChange={(event) => {
-                                const data = event.editor.getData();
-                                formik.setFieldValue("text", data);
-                            }}
-                            name="text"
-                            className="form-control mt-3"
-                        />
-
-                        <button
-                            disabled={!formik.isValid || formik.isSubmitting}
-                            className="btn btn-lg btn-primary btn-block"
-                            type="submit"
-                        >
-                            Ürün Oluştur
-                        </button>
-                    </form>
+                        )}
+                    </Formik>
                 </div>
-            </Layout>
-        </>
+            </div>
+        </Layout>
     );
 };
 export default inject("AuthStore")(observer(CreateProduct));
